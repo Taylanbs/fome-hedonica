@@ -10,15 +10,12 @@ var App = {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', function() {
-  // Pegar ID da URL ?id=XXXXXX
   var params = new URLSearchParams(window.location.search);
   var idURL  = params.get('id');
 
   if (idURL) {
-    // Validar paciente no servidor
-    App.validarPaciente(idURL);
+    App.validarPaciente(idURL.toUpperCase().trim());
   } else {
-    // Verificar se já tem sessão salva
     var idLocal = localStorage.getItem('lany_pac_id');
     if (idLocal) {
       App.iniciarSessao(idLocal, localStorage.getItem('lany_pac_nome') || '');
@@ -31,16 +28,31 @@ document.addEventListener('DOMContentLoaded', function() {
 App.validarPaciente = function(id) {
   document.getElementById('loading-screen').style.display = 'flex';
 
-  Utils.get({ acao: 'getPaciente', pacienteId: id }, function(err, data) {
-    document.getElementById('loading-screen').style.display = 'none';
+  // Salvar localmente antes mesmo de validar
+  // para que funcione offline após primeiro acesso
+  var cachedNome = localStorage.getItem('lany_pac_nome_' + id);
+  if (cachedNome) {
+    App.iniciarSessao(id, cachedNome);
+    return;
+  }
 
-    if (err || !data || !data.ok) {
+  Utils.get({ acao: 'getPaciente', pacienteId: id }, function(err, data) {
+    console.log('Resposta GAS:', err, data);
+
+    if (err) {
+      console.error('Erro na requisição:', err);
+      App.mostrarErro('Erro de conexão. Tente novamente.');
+      return;
+    }
+
+    if (!data || !data.ok) {
       App.mostrarErro('Código não encontrado. Verifique o link com sua nutricionista.');
       return;
     }
 
-    localStorage.setItem('lany_pac_id',   data.id);
+    localStorage.setItem('lany_pac_id', data.id);
     localStorage.setItem('lany_pac_nome', data.nome);
+    localStorage.setItem('lany_pac_nome_' + data.id, data.nome);
     App.iniciarSessao(data.id, data.nome);
   });
 };
@@ -50,15 +62,13 @@ App.iniciarSessao = function(id, nome) {
   App.pacienteNome = nome;
 
   document.getElementById('loading-screen').style.display  = 'none';
-  document.getElementById('login-screen').style.display    = 'none';
+  document.getElementById('erro-screen').style.display     = 'none';
   document.getElementById('app').style.display             = 'block';
 
-  // Preencher header
-  document.getElementById('header-id').textContent   = id;
+  document.getElementById('header-id').textContent = id;
   var saudacao = document.getElementById('header-saudacao');
   if (saudacao && nome) saudacao.textContent = 'Olá, ' + nome.split(' ')[0] + ' 🌿';
 
-  // Hora atual
   var timeEl = document.getElementById('reg-time');
   if (timeEl) timeEl.value = Utils.horaAgora();
 };
@@ -80,22 +90,17 @@ function showTab(id, btn) {
   if (id === 'insights')  App.renderInsights();
 }
 
-// ── CHIPS ──
 function toggleChip(el)        { Utils.toggleChip(el); }
 function toggleSingle(el, gId) { Utils.toggleSingle(el, gId); }
-
-// ── SLIDER ──
-function updateSlider(el) { Utils.updateSlider(el, 'intensity-val'); }
-
-// ── RATING ──
+function updateSlider(el)      { Utils.updateSlider(el, 'intensity-val'); }
 function selectRating(type, val) { Utils.selectRating(App.ratings, type, val); }
 
 // ── SALVAR REGISTRO ──
 function salvarRegistro() {
   if (!App.pacienteId) { Utils.toast('Sessão inválida.'); return; }
 
-  var emocoes   = Utils.getChips('emotion-chips');
-  var outraEm   = document.getElementById('reg-emotion-other').value.trim();
+  var emocoes = Utils.getChips('emotion-chips');
+  var outraEm = document.getElementById('reg-emotion-other').value.trim();
   if (outraEm) emocoes.push(outraEm);
 
   var payload = {
@@ -116,7 +121,7 @@ function salvarRegistro() {
     return;
   }
 
-  // Salvar localmente primeiro
+  // Salvar localmente sempre
   var local = Utils.lerLocal('lany_entries_' + App.pacienteId, []);
   local.unshift(Object.assign({}, payload, { date: new Date().toISOString(), id: Date.now() }));
   Utils.salvarLocal('lany_entries_' + App.pacienteId, local);
@@ -129,7 +134,7 @@ function salvarRegistro() {
     btn.disabled = false; btn.textContent = '💾 Salvar Registro';
     if (err) {
       Utils.setSyncStatus('sync-status', 'err', 'Salvo localmente. Sem conexão no momento.');
-      Utils.toast('Salvo no celular. Enviaremos quando houver conexão.');
+      Utils.toast('Salvo no celular.');
     } else {
       Utils.setSyncStatus('sync-status', 'ok', 'Taylan já pode ver este registro ✓');
       Utils.toast('Registro salvo! 🌿');
@@ -183,7 +188,7 @@ App.renderHistory = function() {
       (e.emocoes && e.emocoes.length ? '<span class="history-badge">' + e.emocoes.slice(0,2).join(' · ') + '</span>' : '') +
       '<div class="history-food">' + (e.vontade || '—') + '</div>' +
       (e.contexto ? '<div class="history-ctx">' + e.contexto + '</div>' : '') +
-      '<div class="history-int">Intensidade: ' + (e.intensidade || '?') + '/10' + (e.ambiente ? ' · ' + e.ambiente : '') + '</div>' +
+      '<div class="history-int">Intensidade: ' + (e.intensidade||'?') + '/10' + (e.ambiente ? ' · ' + e.ambiente : '') + '</div>' +
       (e.comoLidou ? '<div class="history-act">→ ' + e.comoLidou + '</div>' : '') +
       '</div>';
   }).join('');
@@ -226,8 +231,7 @@ App.renderInsights = function() {
         return '<div class="bar-row">' +
           '<div class="bar-label">' + (item[0].length > 14 ? item[0].slice(0,14)+'…' : item[0]) + '</div>' +
           '<div class="bar-bg"><div class="bar-fill" style="width:' + Math.round(item[1]/total*100) + '%"></div></div>' +
-          '<div class="bar-count">' + item[1] + '×</div>' +
-          '</div>';
+          '<div class="bar-count">' + item[1] + '×</div></div>';
       }).join('') +
     '</div>' : '');
 };
