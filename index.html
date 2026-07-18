@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Diário · Fome Hedônica · Lany</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- LOADING -->
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <p>Verificando seu acesso…</p>
+  </div>
+
+  <!-- ERRO -->
+  <div id="erro-screen" style="display:none; position:fixed; inset:0; background:var(--bg); align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:40px;">
+    <div style="font-size:48px; margin-bottom:20px">🌿</div>
+    <div style="font-family:'Cormorant Garamond',serif; font-size:24px; margin-bottom:12px">Acesso não encontrado</div>
+    <p id="erro-msg" style="font-size:13px; color:var(--text-soft); line-height:1.6; max-width:300px"></p>
+  </div>
+
+  <!-- APP -->
+  <div id="app" style="display:none">
+
+    <header class="app-header">
+      <div class="header-pill">Lany Nutrição</div><br>
+      <div class="header-id" id="header-id"></div>
+      <h1>Como está<br>seu <em>corpo</em> agora?</h1>
+      <p id="header-saudacao">Registre, entenda, transforme.</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('registro',this)">✍️ Registro</button>
+      <button class="tab-btn" onclick="showTab('historico',this)">📋 Histórico</button>
+      <button class="tab-btn" onclick="showTab('insights',this)">📊 Padrões</button>
+      <button class="tab-btn" onclick="showTab('semanal',this)">🌿 Semanal</button>
+    </div>
+
+    <main>
+
+      <!-- ── REGISTRO ── -->
+      <div id="tab-registro" class="section active">
+        <p class="section-title">Novo Registro</p>
+        <p class="section-desc">Preencha sempre que sentir uma vontade fora do habitual ou por impulso.</p>
+
+        <div class="card">
+          <div class="card-title">O que aconteceu?</div>
+          <div class="card-sub">Contexto e vontade</div>
+          <label>Horário</label>
+          <input type="time" id="reg-time">
+          <label>Vontade de comer</label>
+          <input type="text" id="reg-food" placeholder="ex: chocolate, salgado, doce…">
+          <label>O que estava acontecendo antes?</label>
+          <textarea id="reg-context" placeholder="Situação, pensamento, local…"></textarea>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Como você estava se sentindo?</div>
+          <div class="card-sub">Selecione uma ou mais emoções</div>
+          <div class="chips" id="emotion-chips">
+            <button class="chip" onclick="toggleChip(this)">😟 Ansiosa</button>
+            <button class="chip" onclick="toggleChip(this)">😔 Triste</button>
+            <button class="chip" onclick="toggleChip(this)">😤 Frustrada</button>
+            <button class="chip" onclick="toggleChip(this)">😴 Cansada</button>
+            <button class="chip" onclick="toggleChip(this)">😰 Estressada</button>
+            <button class="chip" onclick="toggleChip(this)">😐 Entediada</button>
+            <button class="chip" onclick="toggleChip(this)">😠 Com raiva</button>
+            <button class="chip" onclick="toggleChip(this)">🤗 Animada</button>
+            <button class="chip" onclick="toggleChip(this)">😌 Solitária</button>
+            <button class="chip" onclick="toggleChip(this)">🌀 Sobrecarregada</button>
+          </div>
+          <label>Outra emoção</label>
+          <input type="text" id="reg-emotion-other" placeholder="Descreva…">
+        </div>
+
+        <div class="card">
+          <div class="card-title">Intensidade do desejo</div>
+          <div class="card-sub">0 = consigo ignorar · 10 = irresistível</div>
+          <div class="slider-wrap">
+            <div class="slider-labels"><span>0 · Leve</span><span>10 · Irresistível</span></div>
+            <input type="range" min="0" max="10" value="5" id="reg-intensity" oninput="updateSlider(this)">
+            <div class="slider-value" id="intensity-val">5</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Ambiente</div>
+          <div class="card-sub">Onde você estava?</div>
+          <div class="chips" id="env-chips">
+            <button class="chip" onclick="toggleSingle(this,'env-chips')">🏠 Em casa</button>
+            <button class="chip" onclick="toggleSingle(this,'env-chips')">💼 Trabalho</button>
+            <button class="chip" onclick="toggleSingle(this,'env-chips')">🚗 No carro</button>
+            <button class="chip" onclick="toggleSingle(this,'env-chips')">📱 Nas redes</button>
+            <button class="chip" onclick="toggleSingle(this,'env-chips')">🍽️ Restaurante</button>
+            <button class="chip" onclick="toggleSingle(this,'env-chips')">🌙 À noite</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Como você lidou?</div>
+          <div class="card-sub">O que fez após perceber?</div>
+          <div class="chips" id="action-chips">
+            <button class="chip" onclick="toggleSingle(this,'action-chips')">✅ Comi e me permiti</button>
+            <button class="chip" onclick="toggleSingle(this,'action-chips')">🔄 Substituí atividade</button>
+            <button class="chip" onclick="toggleSingle(this,'action-chips')">⏸️ Esperei 10 min</button>
+            <button class="chip" onclick="toggleSingle(this,'action-chips')">🗣️ Conversei</button>
+            <button class="chip" onclick="toggleSingle(this,'action-chips')">🚶 Me mexi</button>
+            <button class="chip" onclick="toggleSingle(this,'action-chips')">❌ Não resisti</button>
+          </div>
+          <label>Outro</label>
+          <textarea id="reg-action-other" placeholder="Descreva…" style="min-height:54px"></textarea>
+        </div>
+
+        <div class="card">
+          <div class="card-title">O que te gera prazer além de comer?</div>
+          <div class="card-sub">Alternativa que poderia ter usado</div>
+          <textarea id="reg-alternative" placeholder="ex: passear com a Amora e a Ameixa, ouvir música, ler…" style="min-height:54px"></textarea>
+        </div>
+
+        <button class="btn btn-teal" id="save-btn" onclick="salvarRegistro()">💾 Salvar Registro</button>
+        <div id="sync-status" style="display:none"></div>
+      </div>
+
+      <!-- ── HISTÓRICO ── -->
+      <div id="tab-historico" class="section">
+        <p class="section-title">Histórico</p>
+        <p class="section-desc">Seus registros salvos neste dispositivo.</p>
+        <div id="history-list"></div>
+      </div>
+
+      <!-- ── INSIGHTS ── -->
+      <div id="tab-insights" class="section">
+        <p class="section-title">Seus Padrões</p>
+        <p class="section-desc">O que está por trás das suas vontades.</p>
+        <div id="insights-content"></div>
+      </div>
+
+      <!-- ── SEMANAL ── -->
+      <div id="tab-semanal" class="section">
+        <p class="section-title">Autoavaliação Semanal</p>
+        <p class="section-desc">Um olhar suave sobre a semana. Sem julgamento.</p>
+
+        <div class="card">
+          <div class="card-title">Como foi a semana?</div>
+          <div class="card-sub">Primeira impressão</div>
+          <div class="rating-row">
+            <button class="rating-btn" id="week-r1" onclick="selectRating('week',1)">😞</button>
+            <button class="rating-btn" id="week-r2" onclick="selectRating('week',2)">😕</button>
+            <button class="rating-btn" id="week-r3" onclick="selectRating('week',3)">😐</button>
+            <button class="rating-btn" id="week-r4" onclick="selectRating('week',4)">🙂</button>
+            <button class="rating-btn" id="week-r5" onclick="selectRating('week',5)">😊</button>
+          </div>
+
+          <label>O que foi positivo?</label>
+          <textarea id="week-positive" placeholder="Pequenas vitórias contam muito…"></textarea>
+
+          <label>O que foi desafiador?</label>
+          <textarea id="week-challenge" placeholder="Situações difíceis…"></textarea>
+
+          <label>O que faria diferente?</label>
+          <textarea id="week-next" placeholder="Um passo pequeno já é suficiente…"></textarea>
+
+          <label>Relação com a comida esta semana</label>
+          <div class="rating-row">
+            <button class="rating-btn" id="food-r1" onclick="selectRating('food',1)">🌑</button>
+            <button class="rating-btn" id="food-r2" onclick="selectRating('food',2)">🌒</button>
+            <button class="rating-btn" id="food-r3" onclick="selectRating('food',3)">🌓</button>
+            <button class="rating-btn" id="food-r4" onclick="selectRating('food',4)">🌔</button>
+            <button class="rating-btn" id="food-r5" onclick="selectRating('food',5)">🌕</button>
+          </div>
+
+          <label>Uma mensagem gentil para você mesma</label>
+          <textarea id="week-message" placeholder="Escreva algo com carinho…" style="min-height:64px"></textarea>
+        </div>
+
+        <button class="btn btn-gold" id="weekly-btn" onclick="salvarSemanal()">🌿 Salvar Autoavaliação</button>
+        <div id="weekly-sync" style="display:none; margin-top:10px"></div>
+      </div>
+
+    </main>
+  </div><!-- /app -->
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

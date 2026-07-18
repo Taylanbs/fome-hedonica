@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Taylan Lany</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <!-- LOCK -->
+  <div id="lock-screen">
+    <div class="lock-orb">🌿</div>
+    <h1 class="lock-title">Dashboard<br><em>Nutricionista</em></h1>
+    <p class="lock-sub">Acesso exclusivo · Taylan Lany</p>
+    <input type="password" class="lock-input" id="pwd" placeholder="••••••">
+    <button class="lock-btn" onclick="unlock()">Entrar</button>
+    <div class="lock-error" id="lock-err"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+
+    <header class="dash-header">
+      <div class="h-brand">
+        <div class="h-dot">🌿</div>
+        <div>
+          <div class="h-name">Lany · Dashboard</div>
+          <div class="h-sub">Painel da Nutricionista</div>
+        </div>
+      </div>
+      <div class="h-badge">Taylan Souza</div>
+    </header>
+
+    <div class="dash-main">
+
+      <!-- SELETOR -->
+      <div class="patient-selector">
+        <div class="ps-title">Selecionar Paciente</div>
+        <div class="ps-row">
+          <select class="ps-select" id="pac-select">
+            <option value="">Carregando pacientes…</option>
+          </select>
+          <button class="ps-btn" id="load-btn" onclick="carregarPaciente()">Ver dados</button>
+          <button class="btn-refresh" onclick="atualizarDados()">↻ Atualizar</button>
+        </div>
+        <div class="ps-status" id="ps-status"></div>
+      </div>
+
+      <!-- LOADING -->
+      <div id="loading-area" style="display:none">
+        <div class="loading">
+          <div class="ld"></div><div class="ld"></div><div class="ld"></div>
+          <p style="margin-top:16px;font-size:13px">Buscando dados…</p>
+        </div>
+      </div>
+
+      <!-- DADOS -->
+      <div id="data-area" style="display:none">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:26px" id="pac-title"></div>
+            <div class="last-upd"><div class="upd-dot"></div><span id="pac-updated"></span></div>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="kpi-grid"></div>
+
+        <div id="alerts-area"></div>
+
+        <div class="dash-section">
+          <div class="dash-title">🔍 Gatilhos Emocionais</div>
+          <div class="card-dark" id="em-chart"></div>
+        </div>
+
+        <div class="dash-section">
+          <div class="dash-title">🌍 Ambientes de Risco</div>
+          <div class="card-dark" id="env-chart"></div>
+        </div>
+
+        <div class="dash-section">
+          <div class="dash-title">📋 Todos os Registros</div>
+          <div id="entries-list"></div>
+        </div>
+
+        <div class="dash-section">
+          <div class="dash-title">🌿 Autoavaliações Semanais</div>
+          <div id="weekly-list"></div>
+        </div>
+
+      </div><!-- /data-area -->
+    </div><!-- /dash-main -->
+  </div><!-- /dashboard -->
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
