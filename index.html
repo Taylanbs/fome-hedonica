@@ -27,8 +27,8 @@
   <div id="app" style="display:none">
 
     <header class="app-header">
-      <div class="header-pill">Lany Nutrição</div><br>
-      <div class="header-id" id="header-id"></div>
+      <div class="header-pill">Taylan Santos · Nutricionista</div>
+      <div class="header-id" id="header-id" style="display:none"></div>
       <h1>Como está<br>seu <em>corpo</em> agora?</h1>
       <p id="header-saudacao">Registre, entenda, transforme.</p>
     </header>
@@ -116,9 +116,20 @@
         </div>
 
         <div class="card">
-          <div class="card-title">O que te gera prazer além de comer?</div>
-          <div class="card-sub">Alternativa que poderia ter usado</div>
-          <textarea id="reg-alternative" placeholder="ex: passear com a Amora e a Ameixa, ouvir música, ler…" style="min-height:54px"></textarea>
+          <div class="card-title">Neste momento, o que você poderia ter feito?</div>
+          <div class="card-sub">Pense no que estava disponível para você agora — um pequeno gesto já conta</div>
+          <div class="chips" id="alt-chips">
+            <button class="chip" onclick="toggleChip(this)">🚶 Caminhar</button>
+            <button class="chip" onclick="toggleChip(this)">🎵 Ouvir música</button>
+            <button class="chip" onclick="toggleChip(this)">📱 Ligar para alguém</button>
+            <button class="chip" onclick="toggleChip(this)">📖 Ler</button>
+            <button class="chip" onclick="toggleChip(this)">🧘 Respirar fundo</button>
+            <button class="chip" onclick="toggleChip(this)">🐾 Brincar com os pets</button>
+            <button class="chip" onclick="toggleChip(this)">💧 Beber água</button>
+            <button class="chip" onclick="toggleChip(this)">✍️ Escrever</button>
+          </div>
+          <label>Outra ideia</label>
+          <textarea id="reg-alternative" placeholder="Descreva o que poderia ter feito neste momento…" style="min-height:48px"></textarea>
         </div>
 
         <button class="btn btn-teal" id="save-btn" onclick="salvarRegistro()">💾 Salvar Registro</button>
