@@ -10,12 +10,29 @@ var Dash = {
 
 // ── UNLOCK ──
 function unlock() {
-  var senha = document.getElementById('pwd').value;
-  if (!senha) return;
+  var senha = document.getElementById('pwd').value.trim();
+  if (!senha) { document.getElementById('lock-err').textContent = 'Digite a senha.'; return; }
 
-  document.getElementById('lock-screen').style.display = 'none';
-  document.getElementById('dashboard').style.display   = 'block';
-  Dash.carregarPacientes(senha);
+  var btn = document.querySelector('.lock-btn');
+  if (btn) { btn.textContent = 'Verificando…'; btn.disabled = true; }
+
+  // Verifica a senha tentando buscar os pacientes
+  Utils.get({ acao: 'getPacientes', senha: senha }, function(err, data) {
+    if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
+
+    if (err || !data || !data.ok) {
+      document.getElementById('lock-err').textContent = 'Senha incorreta ou erro de conexão.';
+      return;
+    }
+
+    // Senha correta — salvar e entrar
+    CONFIG.DASH_PASSWORD = senha;
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display   = 'block';
+
+    Dash.pacientes = data.pacientes || [];
+    Dash.preencherSelect();
+  });
 }
 
 document.addEventListener('keydown', function(e) {
@@ -25,27 +42,32 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
+// ── PREENCHER SELECT COM PACIENTES ──
+Dash.preencherSelect = function() {
+  var sel = document.getElementById('pac-select');
+  sel.innerHTML = '<option value="">Selecione um paciente…</option>';
+  Dash.pacientes.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value       = p.ID;
+    opt.textContent = p.Nome + ' · ' + p.ID;
+    sel.appendChild(opt);
+  });
+  if (Dash.pacientes.length === 0) {
+    sel.innerHTML = '<option value="">Nenhum paciente cadastrado ainda.</option>';
+  }
+};
+
 // ── CARREGAR LISTA DE PACIENTES ──
 Dash.carregarPacientes = function(senha) {
   var sel = document.getElementById('pac-select');
   sel.innerHTML = '<option value="">Carregando…</option>';
-
   Utils.get({ acao: 'getPacientes', senha: senha || CONFIG.DASH_PASSWORD }, function(err, data) {
     if (err || !data || !data.ok) {
-      document.getElementById('lock-screen').style.display = 'flex';
-      document.getElementById('dashboard').style.display   = 'none';
-      document.getElementById('lock-err').textContent = 'Senha incorreta ou erro de conexão.';
+      sel.innerHTML = '<option value="">Erro ao carregar.</option>';
       return;
     }
-
     Dash.pacientes = data.pacientes || [];
-    sel.innerHTML  = '<option value="">Selecione um paciente…</option>';
-    Dash.pacientes.forEach(function(p) {
-      var opt = document.createElement('option');
-      opt.value       = p.ID;
-      opt.textContent = p.Nome + ' · ' + p.ID;
-      sel.appendChild(opt);
-    });
+    Dash.preencherSelect();
   });
 };
 
