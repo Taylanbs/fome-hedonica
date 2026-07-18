@@ -75,50 +75,72 @@ var Utils = {
     if (valId) document.getElementById(valId).textContent = el.value;
   },
 
-  // ── POST via fetch no-cors (fire-and-forget) ──
+  // ── POST via form submit — contorna CORS completamente ──
   post: function(payload, callback) {
-    fetch(CONFIG.GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    .then(function() {
+    // Cria um form oculto que faz POST direto ao GAS
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = CONFIG.GAS_URL;
+    form.target = 'lany_post_frame_' + Date.now();
+    form.style.display = 'none';
+
+    // Serializa payload como campo oculto
+    var input = document.createElement('input');
+    input.type  = 'hidden';
+    input.name  = 'payload';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+
+    // Iframe oculto para receber resposta
+    var frameName = form.target;
+    var iframe = document.createElement('iframe');
+    iframe.name  = frameName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+
+    iframe.onload = function() {
+      setTimeout(function() {
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        if (form.parentNode)   form.parentNode.removeChild(form);
+      }, 1000);
       if (callback) callback(null, { ok: true });
-    })
-    .catch(function(err) {
-      if (callback) callback(err, null);
-    });
+    };
+
+    form.submit();
   },
 
-  // ── GET via JSONP — resolve CORS com Apps Script ──
+  // ── GET via fetch direto — GAS público aceita com redirect ──
   get: function(params, callback) {
-    var cbName = 'lany_cb_' + Date.now();
-    params.callback = cbName;
-
     var qs = Object.keys(params)
       .map(function(k) {
         return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
       })
       .join('&');
 
-    var script = document.createElement('script');
-    script.src = CONFIG.GAS_URL + '?' + qs;
+    var url = CONFIG.GAS_URL + '?' + qs;
 
-    var timeout = setTimeout(function() {
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      if (callback) callback(new Error('Timeout'), null);
-    }, 15000);
-
-    window[cbName] = function(data) {
-      clearTimeout(timeout);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
+    fetch(url, {
+      method: 'GET',
+      redirect: 'follow'
+    })
+    .then(function(r) {
+      // GAS redireciona — pegar o texto da resposta final
+      return r.text();
+    })
+    .then(function(text) {
+      // Limpar possível wrapper JSONP
+      var clean = text.trim();
+      if (clean.startsWith('lany_cb')) {
+        clean = clean.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, '');
+      }
+      var data = JSON.parse(clean);
       if (callback) callback(null, data);
-    };
-
-    document.head.appendChild(script);
+    })
+    .catch(function(err) {
+      console.error('GET error:', err);
+      if (callback) callback(err, null);
+    });
   },
 
   showTab: function(id, btn, prefix) {
