@@ -8,6 +8,12 @@ var App = {
   ratings: { week: 0, food: 0 }
 };
 
+// Helper seguro para style
+function setDisplay(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = value;
+}
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', function() {
   var params = new URLSearchParams(window.location.search);
@@ -26,10 +32,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 App.validarPaciente = function(id) {
-  document.getElementById('loading-screen').style.display = 'flex';
+  setDisplay('loading-screen', 'flex');
+  setDisplay('erro-screen', 'none');
+  setDisplay('app', 'none');
 
-  // Salvar localmente antes mesmo de validar
-  // para que funcione offline após primeiro acesso
+  // Cache local — evita requisição em visitas repetidas
   var cachedNome = localStorage.getItem('lany_pac_nome_' + id);
   if (cachedNome) {
     App.iniciarSessao(id, cachedNome);
@@ -37,11 +44,10 @@ App.validarPaciente = function(id) {
   }
 
   Utils.get({ acao: 'getPaciente', pacienteId: id }, function(err, data) {
-    console.log('Resposta GAS:', err, data);
+    console.log('Resposta GAS:', JSON.stringify(data), 'Erro:', err);
 
     if (err) {
-      console.error('Erro na requisição:', err);
-      App.mostrarErro('Erro de conexão. Tente novamente.');
+      App.mostrarErro('Erro de conexão. Verifique sua internet e tente novamente.');
       return;
     }
 
@@ -61,11 +67,13 @@ App.iniciarSessao = function(id, nome) {
   App.pacienteId   = id;
   App.pacienteNome = nome;
 
-  document.getElementById('loading-screen').style.display  = 'none';
-  document.getElementById('erro-screen').style.display     = 'none';
-  document.getElementById('app').style.display             = 'block';
+  setDisplay('loading-screen', 'none');
+  setDisplay('erro-screen', 'none');
+  setDisplay('app', 'block');
 
-  document.getElementById('header-id').textContent = id;
+  var headerIdEl = document.getElementById('header-id');
+  if (headerIdEl) headerIdEl.textContent = id;
+
   var saudacao = document.getElementById('header-saudacao');
   if (saudacao && nome) saudacao.textContent = 'Olá, ' + nome.split(' ')[0] + ' 🌿';
 
@@ -74,13 +82,11 @@ App.iniciarSessao = function(id, nome) {
 };
 
 App.mostrarErro = function(msg) {
-  document.getElementById('loading-screen').style.display = 'none';
-  var errEl = document.getElementById('erro-screen');
-  if (errEl) {
-    errEl.style.display = 'flex';
-    var msgEl = document.getElementById('erro-msg');
-    if (msgEl) msgEl.textContent = msg;
-  }
+  setDisplay('loading-screen', 'none');
+  setDisplay('app', 'none');
+  setDisplay('erro-screen', 'flex');
+  var msgEl = document.getElementById('erro-msg');
+  if (msgEl) msgEl.textContent = msg;
 };
 
 // ── TABS ──
@@ -90,9 +96,9 @@ function showTab(id, btn) {
   if (id === 'insights')  App.renderInsights();
 }
 
-function toggleChip(el)        { Utils.toggleChip(el); }
-function toggleSingle(el, gId) { Utils.toggleSingle(el, gId); }
-function updateSlider(el)      { Utils.updateSlider(el, 'intensity-val'); }
+function toggleChip(el)          { Utils.toggleChip(el); }
+function toggleSingle(el, gId)   { Utils.toggleSingle(el, gId); }
+function updateSlider(el)        { Utils.updateSlider(el, 'intensity-val'); }
 function selectRating(type, val) { Utils.selectRating(App.ratings, type, val); }
 
 // ── SALVAR REGISTRO ──
@@ -121,17 +127,17 @@ function salvarRegistro() {
     return;
   }
 
-  // Salvar localmente sempre
+  // Sempre salvar local primeiro
   var local = Utils.lerLocal('lany_entries_' + App.pacienteId, []);
   local.unshift(Object.assign({}, payload, { date: new Date().toISOString(), id: Date.now() }));
   Utils.salvarLocal('lany_entries_' + App.pacienteId, local);
 
   var btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = '⏳ Salvando…';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Salvando…'; }
   Utils.setSyncStatus('sync-status', 'loading', 'Enviando para a nutricionista…');
 
   Utils.post(payload, function(err) {
-    btn.disabled = false; btn.textContent = '💾 Salvar Registro';
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Salvar Registro'; }
     if (err) {
       Utils.setSyncStatus('sync-status', 'err', 'Salvo localmente. Sem conexão no momento.');
       Utils.toast('Salvo no celular.');
@@ -159,11 +165,11 @@ function salvarSemanal() {
   };
 
   var btn = document.getElementById('weekly-btn');
-  btn.disabled = true; btn.textContent = '⏳ Salvando…';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Salvando…'; }
   Utils.setSyncStatus('weekly-sync', 'loading', 'Enviando…');
 
   Utils.post(payload, function(err) {
-    btn.disabled = false; btn.textContent = '🌿 Salvar Autoavaliação';
+    if (btn) { btn.disabled = false; btn.textContent = '🌿 Salvar Autoavaliação'; }
     if (err) {
       Utils.setSyncStatus('weekly-sync', 'err', 'Erro. Tente novamente.');
     } else {
@@ -194,7 +200,7 @@ App.renderHistory = function() {
   }).join('');
 };
 
-// ── INSIGHTS LOCAIS ──
+// ── INSIGHTS ──
 App.renderInsights = function() {
   var data = Utils.lerLocal('lany_entries_' + App.pacienteId, []);
   var el   = document.getElementById('insights-content');
