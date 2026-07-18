@@ -119,7 +119,7 @@ function salvarRegistro() {
     intensidade: document.getElementById('reg-intensity').value,
     ambiente:    (Utils.getChips('env-chips')[0] || ''),
     comoLidou:   (Utils.getChips('action-chips')[0] || document.getElementById('reg-action-other').value.trim()),
-    alternativa: document.getElementById('reg-alternative').value.trim()
+    alternativa: (Utils.getChips('alt-chips').join(', ') + ' ' + document.getElementById('reg-alternative').value.trim()).trim()
   };
 
   if (!payload.vontade && !payload.contexto) {
@@ -253,6 +253,7 @@ App.limparFormulario = function() {
   Utils.clearChips('emotion-chips');
   Utils.clearChips('env-chips');
   Utils.clearChips('action-chips');
+  Utils.clearChips('alt-chips');
   var timeEl = document.getElementById('reg-time');
   if (timeEl) timeEl.value = Utils.horaAgora();
 };
